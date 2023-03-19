@@ -1,0 +1,50 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import xlsxwriter
+
+# PSF values
+psf_values = [2.67602, 1.496526829, 0.80826184, 0.667971073, 0.634736611, 0.634736611, 0.667971073, 0.80826184, 1.496526829]
+
+# MTF values
+mtf_values = [1, 0.586256479, 0.423083701, 0.249421246, 0.159676218, 0.07342775, 0.066434631, 0.052448393, 0.065269111]
+mtf_values.reverse()
+
+# Calculate FWHM
+psf_max = max(psf_values)
+psf_half_max = psf_max / 2
+psf_index1 = np.argmin(abs(np.array(psf_values) - psf_half_max))
+psf_index2 = np.argmin(abs(np.array(psf_values) - psf_half_max)[psf_index1:]) + psf_index1
+fwhm = psf_index2 - psf_index1
+
+# Plot PSF and MTF
+x_psf = np.arange(len(psf_values))
+x_mtf = np.arange(len(mtf_values))
+fig, ax1 = plt.subplots()
+color = 'tab:red'
+ax1.set_xlabel('Pixels')
+ax1.set_ylabel('PSF', color=color)
+ax1.plot(x_psf, psf_values, color=color)
+ax1.tick_params(axis='y', labelcolor=color)
+ax2 = ax1.twinx()
+color = 'tab:blue'
+ax2.set_ylabel('MTF', color=color)
+ax2.plot(x_mtf, mtf_values, color=color)
+ax2.tick_params(axis='y', labelcolor=color)
+plt.title('PSF, MTF, and FWHM')
+plt.grid()
+
+# Plot FWHM
+plt.plot([psf_index1, psf_index2], [psf_half_max, psf_half_max], 'r-', linewidth=2)
+plt.annotate(f'FWHM = {fwhm}', xy=(psf_index2-10, psf_half_max+0.1), fontsize=10, color='red')
+plt.show()
+
+# Export to Excel
+workbook = xlsxwriter.Workbook('PSF_MTF_FWHM.xlsx')
+worksheet = workbook.add_worksheet()
+worksheet.write(0, 0, 'PSF')
+worksheet.write_column(1, 0, psf_values)
+worksheet.write(0, 1, 'MTF')
+worksheet.write_column(1, 1, mtf_values)
+worksheet.write(0, 2, 'FWHM')
+worksheet.write(1, 2, fwhm)
+workbook.close()
