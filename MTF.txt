@@ -1,0 +1,25 @@
+import numpy as np
+import pandas as pd
+from scipy.optimize import curve_fit
+
+# Define the Gaussian function to fit
+def gauss(x, A, mu, sigma, C):
+    return A * np.exp(-(x - mu)**2 / (2 * sigma**2)) + C
+
+# Define the MTF data and frequency values
+mtf = np.array([0.065269111, 0.052448393, 0.066434631, 0.07342775, 0.159676218, 0.249421246, 0.423083701, 0.586256479, 1])
+freq = np.array([12, 10, 9, 8, 7, 6, 5, 4, 0])
+
+# Fit the MTF data to the Gaussian function
+popt, pcov = curve_fit(gauss, freq, mtf)
+
+# Calculate the 10% MTF frequency
+A, mu, sigma, C = popt
+ten_percent_mtf = mu - sigma * np.sqrt(2 * np.log(1 / 0.1))
+
+# Create a DataFrame with the MTF data and fitted Gaussian function values
+df = pd.DataFrame({'Frequency (lp/mm)': freq, 'MTF': mtf, 'Gaussian Fit': gauss(freq, *popt)})
+
+# Export the DataFrame to an Excel sheet
+with pd.ExcelWriter('mtf_data.xlsx') as writer:
+    df.to_excel(writer, index=False)
